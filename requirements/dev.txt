@@ -1,0 +1,4 @@
+-r core.txt
+-r tests.txt
+
+tox>=3.23.1
