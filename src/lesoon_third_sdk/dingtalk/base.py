@@ -7,15 +7,16 @@ from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import algorithms
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import modes
-from dingtalk.client import AppKeyClient
 from dingtalk.storage import kvstorage
 from lesoon_common import current_app
 from lesoon_common.exceptions import ConfigError
 from lesoon_common.extensions import ca
 from lesoon_common.utils.base import random_alpha_numeric
 
+from lesoon_third_sdk.dingtalk.api import EmployeermApi
 from lesoon_third_sdk.dingtalk.api import SnsApi
 from lesoon_third_sdk.dingtalk.api import UserApi
+from lesoon_third_sdk.dingtalk.client import AppKeyClient
 
 
 class DingtalkCallbackCrypto:
@@ -114,26 +115,32 @@ class DingTalk:
     storage = kvstorage.KvStorage(kvdb=ca, prefix=':dingtalk')
     AppKeyClient.sns = SnsApi()
     AppKeyClient.user = UserApi()
+    AppKeyClient.employeerm = EmployeermApi()
 
     # 此属性不作使用，只作展示使用
-    _CONFIG = {
-        'DINGTALK': {
-            'CORP_ID': '',
-            'APP_KEY': '',
-            'APP_SECRET': '',
-            'CALLBACK': {
-                'TOKEN': '',
-                'AES_KEY': ''
-            }
-        }
+    CONFIG = {
+        'CORP_ID': '',
+        'APP_KEY': '',
+        'APP_SECRET': '',
+        'AGENT_ID': '',
+        'CALLBACK': {
+            'TOKEN': '',
+            'AES_KEY': ''
+        },
+        # 自定义参数
+        'EXTRA': {}
     }
 
     @classmethod
-    def _get_config(cls):
+    def extra_config(cls):
+        return cls.CONFIG['EXTRA']
+
+    @classmethod
+    def _get_config(cls) -> dict:
         config = current_app.config.get('DINGTALK')
         if not config:
             raise ConfigError('无法找到配置:DINGTALK')
-        cls._CONFIG['DINGTALK'] = config
+        cls.CONFIG.update(**config)
         return config
 
     @classmethod
@@ -143,6 +150,7 @@ class DingTalk:
             corp_id=config['CORP_ID'],
             app_key=config['APP_KEY'],
             app_secret=config['APP_SECRET'],
+            agent_id=config['AGENT_ID'],
             storage=cls.storage,
         )
 
