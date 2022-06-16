@@ -13,9 +13,6 @@ from lesoon_common.exceptions import ConfigError
 from lesoon_common.extensions import ca
 from lesoon_common.utils.base import random_alpha_numeric
 
-from lesoon_third_sdk.dingtalk.api import EmployeermApi
-from lesoon_third_sdk.dingtalk.api import SnsApi
-from lesoon_third_sdk.dingtalk.api import UserApi
 from lesoon_third_sdk.dingtalk.client import AppKeyClient
 
 
@@ -113,10 +110,6 @@ class DingtalkCallbackCrypto:
 
 class DingTalk:
     storage = kvstorage.KvStorage(kvdb=ca, prefix=':dingtalk')
-    AppKeyClient.sns = SnsApi()
-    AppKeyClient.user = UserApi()
-    AppKeyClient.employeerm = EmployeermApi()
-
     # 此属性不作使用，只作展示使用
     CONFIG = {
         'CORP_ID': '',
@@ -133,6 +126,7 @@ class DingTalk:
 
     @classmethod
     def extra_config(cls):
+        cls._get_config()
         return cls.CONFIG['EXTRA']
 
     @classmethod
