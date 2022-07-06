@@ -2,18 +2,20 @@ import base64
 import hashlib
 import struct
 import time
+import typing as t
 
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import algorithms
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import modes
-from dingtalk.storage import kvstorage
+from dingtalk.storage import BaseStorage
+from flask import Flask
 from lesoon_common import current_app
 from lesoon_common.exceptions import ConfigError
-from lesoon_common.extensions import ca
 from lesoon_common.utils.base import random_alpha_numeric
 
 from lesoon_third_sdk.dingtalk.client import AppKeyClient
+from lesoon_third_sdk.dingtalk.client import NewAppKeyClient
 
 
 class DingtalkCallbackCrypto:
@@ -109,7 +111,6 @@ class DingtalkCallbackCrypto:
 
 
 class DingTalk:
-    storage = kvstorage.KvStorage(kvdb=ca, prefix=':dingtalk')
     # 此属性不作使用，只作展示使用
     CONFIG = {
         'CORP_ID': '',
@@ -124,34 +125,45 @@ class DingTalk:
         'EXTRA': {}
     }
 
-    @classmethod
-    def extra_config(cls):
-        cls._get_config()
-        return cls.CONFIG['EXTRA']
+    def __init__(self,
+                 app: Flask = None,
+                 config: dict = None,
+                 storage: BaseStorage = None):
+        self.config: t.Dict[str, t.Any] = config or {}
+        self.storage = storage
+        if app:
+            self.init_app(app)
+        if not self.config:
+            raise ConfigError('缺乏启动配置')
 
-    @classmethod
-    def _get_config(cls) -> dict:
-        config = current_app.config.get('DINGTALK')
-        if not config:
-            raise ConfigError('无法找到配置:DINGTALK')
-        cls.CONFIG.update(**config)
-        return config
+    def init_app(self, app: Flask):
+        self.config = current_app.config.get('DINGTALK')
 
-    @classmethod
-    def create_client(cls) -> AppKeyClient:
-        config = cls._get_config()
+    @property
+    def extra_config(self):
+        return self.config['EXTRA']
+
+    def create_client(self) -> AppKeyClient:
         return AppKeyClient(
-            corp_id=config['CORP_ID'],
-            app_key=config['APP_KEY'],
-            app_secret=config['APP_SECRET'],
-            agent_id=config['AGENT_ID'],
-            storage=cls.storage,
+            corp_id=self.config['CORP_ID'],
+            app_key=self.config['APP_KEY'],
+            app_secret=self.config['APP_SECRET'],
+            agent_id=self.config['AGENT_ID'],
+            storage=self.storage,
         )
 
-    @classmethod
-    def create_callback_crypto(cls) -> DingtalkCallbackCrypto:
-        app_key = cls._get_config()['APP_KEY']
-        callback_config = cls._get_config().get('CALLBACK')
+    def create_new_client(self) -> NewAppKeyClient:
+        return NewAppKeyClient(
+            corp_id=self.config['CORP_ID'],
+            app_key=self.config['APP_KEY'],
+            app_secret=self.config['APP_SECRET'],
+            agent_id=self.config['AGENT_ID'],
+            storage=self.storage,
+        )
+
+    def create_callback_crypto(self) -> DingtalkCallbackCrypto:
+        app_key = self.config['APP_KEY']
+        callback_config = self.config.get('CALLBACK')
         if not callback_config:
             raise ConfigError('配置文件中无法找到钉钉事件订阅的配置！')
         token = callback_config['TOKEN']
