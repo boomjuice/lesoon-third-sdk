@@ -112,7 +112,7 @@ class DingtalkCallbackCrypto:
 
 class DingTalk:
     # 此属性不作使用，只作展示使用
-    CONFIG = {
+    _CONFIG = {
         'CORP_ID': '',
         'APP_KEY': '',
         'APP_SECRET': '',
@@ -137,7 +137,7 @@ class DingTalk:
             raise ConfigError('缺乏启动配置')
 
     def init_app(self, app: Flask):
-        self.config = current_app.config.get('DINGTALK')
+        self.config = app.config.get('DINGTALK', {})
 
     @property
     def extra_config(self):

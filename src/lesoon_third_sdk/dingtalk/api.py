@@ -250,3 +250,41 @@ class YiDaApi(DingTalkBaseAPI):
                     self.DATE_TIME_FORMAT)
             data['modifiedToTimeGMT'] = modified_to_time_gmt
         return self._post('/v1.0/yida/forms/instances/search', data=data)
+
+
+class OAuth2(DingTalkBaseAPI):
+
+    def get_user_access_token(self, code: str, refresh_code: str = None):
+        """
+        调用本接口获取用户token
+        https://open.dingtalk.com/document/orgapp-server/obtain-user-token
+        Args:
+            code: 授权码
+            refresh_code: 刷新码
+
+        Returns:
+
+        """
+        data = {
+            'clientId': self._client.app_key,
+            'clientSecret': self._client.app_secret,
+            'code': code,
+            'grantType': 'authorization_code',
+        }
+        if refresh_code:
+            data['refreshToken'] = refresh_code
+            data['grantType'] = 'refresh_token'
+
+        return self._post('/v1.0/oauth2/userAccessToken', data=data)
+
+    def get_user_contact(self, access_token: str, unionId: str = 'me'):
+        """
+        调用本接口获取企业用户通讯录中的个人信息。
+        Args:
+            access_token: 个人用户的accessToken
+            unionId:用户的unionId
+        Returns:
+
+        """
+        headers = {'x-acs-dingtalk-access-token': access_token}
+        return self._get(f'/v1.0/contact/users/{unionId}', headers=headers)
