@@ -2,11 +2,11 @@ import inspect
 import json
 import logging
 import time
+from urllib.parse import urljoin
 
 import requests
 from dingtalk.core.utils import json_loads
 from lesoon_common.utils.safe import generate_md5
-from six.moves.urllib.parse import urljoin
 
 from lesoon_third_sdk.senselink.client.api import SenseLinkBaseAPI
 from lesoon_third_sdk.senselink.exceptions import SenseLinkClientException

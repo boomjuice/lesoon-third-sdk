@@ -1,6 +1,4 @@
 import logging
-import random
-import time
 
 from dingtalk.core.utils import json_loads
 from wechatpy.client import WeChatClient as _Client
